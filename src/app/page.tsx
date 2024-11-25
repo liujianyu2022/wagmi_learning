@@ -1,23 +1,28 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Address } from 'viem'
+import { Address, formatUnits } from 'viem'
 
 import {
-  useAccount,
-  useConnect,
-  useDisconnect,
+  useAccount,                   // 获取账户信息（地址、链 ID 等）
+  useConnect,                   // 管理钱包连接的状态，提供连接器和连接操作
+  useDisconnect,                // 用于断开钱包连接
   useSwitchChain,
-  useBalance
+  useSwitchAccount,
+  useBalance,
+  Connector
 } from 'wagmi'
 
 import SendETH from './components/SendETH'
+import LIUToken from './components/LIUToken'
 
 function App() {
   const [userAddress, setUserAddress] = useState<Address>()
 
   const account = useAccount()
-  const { connectors, connect, status, error } = useConnect()
+  const { switchAccount } = useSwitchAccount()              // 使用 useSwitchAccount hook
+
+  const { connectors, connect, status, error } = useConnect()           // 提供了多个连接器（如 MetaMask、Coinbase Wallet 等），connect 用于连接钱包
   const { chains, switchChain } = useSwitchChain()
   const { disconnect } = useDisconnect()
 
@@ -26,11 +31,15 @@ function App() {
 
   useEffect(() => {
     if (account && account.address) {
-      setUserAddress(account.address)
+      setUserAddress(account.address)                                   // 指向当前钱包中使用的账户
     } else {
       setUserAddress("0x")
     }
   }, [account])
+
+  const handleSwitchAccount = (connector: Connector) => {
+    switchAccount({ connector })
+  }
 
   return (
     <>
@@ -39,24 +48,31 @@ function App() {
 
         <div>
           <div>status: {account.status}</div>
+          <div>current address: {account.address} {userAddress}</div>
           <div>addresses: {JSON.stringify(account.addresses)}</div>
           <div>chainId: {account.chainId}</div>
-          <div>balance: {`${userBanalce?.formatted} ${userBanalce?.symbol}`}</div>
+          <div>balance: {userBanalce ? `${formatUnits(userBanalce.value, 18)} ${userBanalce.symbol}` : "Loading..."}</div>
         </div>
 
         {account.status === 'connected' && (
-          <button type="button" onClick={() => disconnect()}>
-            Disconnect
-          </button>
+          <button type="button" onClick={() => disconnect()}>Disconnect</button>
         )}
+
+        {connectors.map((connector) => (
+          <button key={connector.id} onClick={() => switchAccount({ connector })}>
+            {connector.name}
+          </button>
+        ))}
       </div>
 
+
+
+      <hr />
       <div>
+        <div>switch network</div>
         {
           chains.map(chain => (
-            <button key={chain.id} onClick={() => switchChain({ chainId: chain.id })}>
-              {`${chain.id} - ${chain.name}`}
-            </button>
+            <button key={chain.id} onClick={() => switchChain({ chainId: chain.id })}>{`${chain.id} - ${chain.name}`}</button>
           ))
         }
       </div>
@@ -66,6 +82,13 @@ function App() {
         <p>SendETH</p>
         <SendETH />
       </div>
+      <hr />
+
+      <div>
+        <p>LIU TOKEN</p>
+        <LIUToken />
+      </div>
+
       <hr />
 
       <div>
