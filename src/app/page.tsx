@@ -48,7 +48,7 @@ function App() {
 
         <div>
           <div>status: {account.status}</div>
-          <div>current address: {account.address} {userAddress}</div>
+          <div>current address: {account.address}</div>
           <div>addresses: {JSON.stringify(account.addresses)}</div>
           <div>chainId: {account.chainId}</div>
           <div>balance: {userBanalce ? `${formatUnits(userBanalce.value, 18)} ${userBanalce.symbol}` : "Loading..."}</div>
